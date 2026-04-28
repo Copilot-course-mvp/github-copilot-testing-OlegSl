@@ -24,8 +24,13 @@ class TestCustomerCreation:
         with pytest.raises(ValueError, match="Customer name cannot be empty"):
             Customer(id="C001", name="", email="alice@example.com")
 
-    # TODO: Test negative total_spent raises ValueError
-    # TODO: Test negative order_count raises ValueError
+    def test_negative_total_spent_raises_error(self):
+        with pytest.raises(ValueError, match="Total spent cannot be negative"):
+            Customer(id="C001", name="Alice", email="alice@example.com", total_spent=-100.0)
+
+    def test_negative_order_count_raises_error(self):
+        with pytest.raises(ValueError, match="Order count cannot be negative"):
+            Customer(id="C001", name="Alice", email="alice@example.com", order_count=-1)
 
 
 class TestCustomerTierDiscount:
@@ -42,7 +47,19 @@ class TestCustomerTierDiscount:
         )
         assert customer.tier_discount_percent == 5.0
 
-    # TODO: Add tests for GOLD tier (10%) and PLATINUM tier (15%)
+    def test_gold_tier_discount(self):
+        customer = Customer(
+            id="C001", name="Alice", email="alice@example.com",
+            tier=CustomerTier.GOLD
+        )
+        assert customer.tier_discount_percent == 10.0
+
+    def test_platinum_tier_discount(self):
+        customer = Customer(
+            id="C001", name="Alice", email="alice@example.com",
+            tier=CustomerTier.PLATINUM
+        )
+        assert customer.tier_discount_percent == 15.0
 
 
 class TestCustomerTierUpdate:
@@ -74,5 +91,15 @@ class TestCustomerTierUpdate:
         with pytest.raises(ValueError, match="Purchase amount must be positive"):
             customer.record_purchase(-50.0)
 
-    # TODO: Add test for tier remaining STANDARD when total_spent < 1000
-    # TODO: Add test for multiple record_purchase calls accumulating correctly
+    def test_tier_remains_standard_when_total_spent_under_threshold(self):
+        customer = Customer(id="C001", name="Alice", email="alice@example.com", total_spent=999.0)
+        customer.update_tier()
+        assert customer.tier == CustomerTier.STANDARD
+
+    def test_multiple_record_purchase_calls_accumulate_correctly(self):
+        customer = Customer(id="C001", name="Alice", email="alice@example.com")
+        customer.record_purchase(100.0)
+        customer.record_purchase(200.0)
+
+        assert customer.total_spent == 300.0
+        assert customer.order_count == 2

@@ -28,9 +28,14 @@ class TestEmailValidator:
     def test_empty_string(self):
         assert validate_email("") is False
 
-    # TODO: Add test for None input
-    # TODO: Add test for email with spaces
-    # TODO: Add test for email with special characters in local part
+    def test_none_input_returns_false(self):
+        assert validate_email(None) is False
+
+    def test_email_with_spaces_is_invalid(self):
+        assert validate_email("user @example.com") is False
+
+    def test_email_with_special_characters_in_local_part(self):
+        assert validate_email("user+test@example.com") is True
 
 
 class TestPriceValidator:
@@ -45,8 +50,11 @@ class TestPriceValidator:
     def test_invalid_price_negative(self):
         assert validate_price(-1.0) is False
 
-    # TODO: Add test for string input
-    # TODO: Add test for very large price
+    def test_string_input_returns_false(self):
+        assert validate_price("9.99") is False
+
+    def test_very_large_price_is_valid(self):
+        assert validate_price(1e12) is True
 
 
 class TestQuantityValidator:
@@ -61,8 +69,11 @@ class TestQuantityValidator:
     def test_invalid_quantity_negative(self):
         assert validate_quantity(-3) is False
 
-    # TODO: Add test for float input (should return False)
-    # TODO: Add test for very large quantity
+    def test_float_input_returns_false(self):
+        assert validate_quantity(1.5) is False
+
+    def test_very_large_quantity_is_valid(self):
+        assert validate_quantity(10**6) is True
 
 
 class TestProductIdValidator:
@@ -77,5 +88,8 @@ class TestProductIdValidator:
     def test_empty_product_id(self):
         assert validate_product_id("") is False
 
-    # TODO: Add test for product ID starting with special character
-    # TODO: Add test for product ID that is too long (>50 chars)
+    def test_product_id_starting_with_special_character_is_invalid(self):
+        assert validate_product_id("@PROD001") is False
+
+    def test_product_id_too_long_is_invalid(self):
+        assert validate_product_id("A" * 51) is False

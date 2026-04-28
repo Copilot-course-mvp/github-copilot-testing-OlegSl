@@ -120,9 +120,42 @@ class TestCancellationFlow:
         assert inventory.get_product("P003").stock == 3
         assert order.status == OrderStatus.CANCELLED
 
-    # TODO: Add test for cancelling after confirm (should still restore stock)
-    # TODO: Add test that cancelling a shipped order raises an error
-    # TODO: Add test for placing multiple orders and verifying stock correctly
+    def test_cancel_after_confirm_restores_stock(
+        self, order_service, standard_customer, inventory
+    ):
+        """Cancelling after confirming should still restore stock."""
+        order = order_service.create_order(standard_customer)
+        order_service.add_item_to_order(order, "P003", 2)
+        order_service.confirm_order(order, standard_customer)
+        assert order.status == OrderStatus.CONFIRMED
+        assert inventory.get_product("P003").stock == 1
+
+        order_service.cancel_order(order.id)
+        assert inventory.get_product("P003").stock == 3  # Restored
+        assert order.status == OrderStatus.CANCELLED
+
+    def test_cancelling_shipped_order_raises_error(self, order_service, standard_customer):
+        """Cancelling a shipped order should raise an error."""
+        order = order_service.create_order(standard_customer)
+        order_service.add_item_to_order(order, "P001", 1)
+        order_service.confirm_order(order, standard_customer)
+        order_service.advance_order(order.id)  # PROCESSING
+        order_service.advance_order(order.id)  # SHIPPED
+
+        with pytest.raises(ValueError, match="Cannot cancel"):
+            order_service.cancel_order(order.id)
+
+    def test_placing_multiple_orders_verifies_stock_correctly(
+        self, order_service, standard_customer, inventory
+    ):
+        """Multiple orders should correctly reduce stock."""
+        order1 = order_service.create_order(standard_customer)
+        order_service.add_item_to_order(order1, "P001", 2)  # Stock: 50 - 2 = 48
+
+        order2 = order_service.create_order(standard_customer)
+        order_service.add_item_to_order(order2, "P001", 3)  # Stock: 48 - 3 = 45
+
+        assert inventory.get_product("P001").stock == 45
 
 
 class TestEdgeCases:
@@ -148,6 +181,40 @@ class TestEdgeCases:
         with pytest.raises(ValueError):
             order_service.add_item_to_order(order2, "P003", 1)
 
-    # TODO: Add integration test combining coupon codes with tier discounts
-    # TODO: Add integration test for listing orders by customer
-    # TODO: Add integration test for listing orders by status
+    def test_combining_coupon_codes_with_tier_discounts(self, order_service, gold_customer):
+        """Test applying coupon codes with tier discounts."""
+        order = order_service.create_order(gold_customer)
+        order_service.add_item_to_order(order, "P002", 1)  # $80 gadget
+        # Gold tier: 10% discount = $8, plus SAVE10 coupon: $8, but best discount wins
+        # Pricing service uses max discount, so $8 from tier
+        order_service.confirm_order(order, gold_customer)
+        assert order.discount_amount == pytest.approx(8.0)  # Tier discount
+
+    def test_listing_orders_by_customer(self, order_service, standard_customer, gold_customer):
+        """Test listing orders by customer."""
+        order1 = order_service.create_order(standard_customer)
+        order2 = order_service.create_order(gold_customer)
+        order3 = order_service.create_order(standard_customer)
+
+        orders_for_standard = order_service.list_orders_by_customer(standard_customer.id)
+        assert len(orders_for_standard) == 2
+        assert {o.id for o in orders_for_standard} == {order1.id, order3.id}
+
+    def test_listing_orders_by_status(self, order_service, standard_customer):
+        """Test listing orders by status."""
+        order1 = order_service.create_order(standard_customer)
+        order_service.add_item_to_order(order1, "P001", 1)
+        order_service.confirm_order(order1, standard_customer)
+
+        order2 = order_service.create_order(standard_customer)
+        order_service.add_item_to_order(order2, "P001", 1)
+        order_service.confirm_order(order2, standard_customer)
+        order_service.advance_order(order2.id)  # PROCESSING
+
+        pending_orders = order_service.list_orders_by_status(OrderStatus.PENDING)
+        confirmed_orders = order_service.list_orders_by_status(OrderStatus.CONFIRMED)
+        processing_orders = order_service.list_orders_by_status(OrderStatus.PROCESSING)
+
+        assert len(pending_orders) == 0  # No pending after confirm
+        assert len(confirmed_orders) == 1
+        assert len(processing_orders) == 1

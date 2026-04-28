@@ -29,9 +29,15 @@ class TestCalculateTax:
         with pytest.raises(ValueError, match="Tax rate must be between"):
             calculate_tax(100.0, 101.0)
 
-    # TODO: Add test for fractional tax rate (e.g., 8.75%)
-    # TODO: Add test for negative tax rate raises ValueError
-    # TODO: Add test for 100% tax rate
+    def test_fractional_tax_rate(self):
+        assert calculate_tax(100.0, 8.75) == pytest.approx(8.75)
+
+    def test_negative_tax_rate_raises_value_error(self):
+        with pytest.raises(ValueError, match="Tax rate must be between"):
+            calculate_tax(100.0, -5.0)
+
+    def test_hundred_percent_tax_rate(self):
+        assert calculate_tax(100.0, 100.0) == 100.0
 
 
 class TestCalculateAverage:
@@ -46,8 +52,12 @@ class TestCalculateAverage:
     def test_average_of_empty_list(self):
         assert calculate_average([]) is None
 
-    # TODO: Add test for list with negative values
-    # TODO: Add test for large list (performance/correctness check)
+    def test_average_of_list_with_negative_values(self):
+        assert calculate_average([-1.0, 1.0, 2.0]) == pytest.approx(0.6666666666666666)
+
+    def test_average_of_large_list(self):
+        values = list(range(1000))
+        assert calculate_average(values) == pytest.approx(499.5)
 
 
 class TestCalculatePercentageChange:
@@ -66,7 +76,8 @@ class TestCalculatePercentageChange:
         with pytest.raises(ValueError, match="Cannot calculate percentage change from zero"):
             calculate_percentage_change(0.0, 50.0)
 
-    # TODO: Add test for change from negative value
+    def test_change_from_negative_value(self):
+        assert calculate_percentage_change(-50.0, 50.0) == pytest.approx(200.0)
 
 
 class TestApplyDiscount:
@@ -85,8 +96,13 @@ class TestApplyDiscount:
         with pytest.raises(ValueError, match="Amount cannot be negative"):
             apply_discount(-10.0, 10.0)
 
-    # TODO: Add test for discount > 100 raises ValueError
-    # TODO: Add test for discount < 0 raises ValueError
+    def test_discount_greater_than_100_raises_value_error(self):
+        with pytest.raises(ValueError, match="Discount percent must be between 0 and 100"):
+            apply_discount(100.0, 150.0)
+
+    def test_discount_less_than_zero_raises_value_error(self):
+        with pytest.raises(ValueError, match="Discount percent must be between 0 and 100"):
+            apply_discount(100.0, -5.0)
 
 
 class TestCompoundInterest:
@@ -99,6 +115,13 @@ class TestCompoundInterest:
     def test_compound_interest_zero_periods(self):
         assert calculate_compound_interest(1000.0, 10.0, 0) == pytest.approx(1000.0)
 
-    # TODO: Add test for negative principal raises ValueError
-    # TODO: Add test for negative rate raises ValueError
-    # TODO: Add test for multiple periods (verify compounding is correct)
+    def test_negative_principal_raises_value_error(self):
+        with pytest.raises(ValueError, match="Principal cannot be negative"):
+            calculate_compound_interest(-1000.0, 10.0, 1)
+
+    def test_negative_rate_raises_value_error(self):
+        with pytest.raises(ValueError, match="Rate cannot be negative"):
+            calculate_compound_interest(1000.0, -5.0, 1)
+
+    def test_compound_interest_multiple_periods(self):
+        assert calculate_compound_interest(1000.0, 10.0, 2) == pytest.approx(1210.0)
