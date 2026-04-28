@@ -104,3 +104,11 @@ class TestBulkDiscount:
 
     def test_bulk_discount_above_threshold(self, pricing):
         assert pricing.calculate_bulk_discount(200.0, 10) == 20.0
+
+    def test_calculate_customer_discount_negative_subtotal_raises_error(self, pricing, standard_customer):
+        with pytest.raises(ValueError, match="Subtotal cannot be negative"):
+            pricing.calculate_customer_discount(-10.0, standard_customer)
+
+    def test_calculate_bulk_discount_negative_item_count_raises_error(self, pricing):
+        with pytest.raises(ValueError, match="Item count cannot be negative"):
+            pricing.calculate_bulk_discount(100.0, -1)

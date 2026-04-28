@@ -103,3 +103,7 @@ class TestCustomerTierUpdate:
 
         assert customer.total_spent == 300.0
         assert customer.order_count == 2
+
+    def test_customer_repr(self):
+        customer = Customer(id="C001", name="Alice", email="alice@example.com", tier=CustomerTier.GOLD)
+        assert repr(customer) == "Customer(id='C001', name='Alice', tier=gold)"

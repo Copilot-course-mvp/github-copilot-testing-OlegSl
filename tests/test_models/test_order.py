@@ -119,3 +119,18 @@ class TestOrderStatusTransitions:
         order = Order(id="O001", customer_id="C001", status=OrderStatus.CONFIRMED)
         with pytest.raises(ValueError, match="Cannot add items"):
             order.add_item(make_item())
+
+    def test_confirm_empty_order_raises_error(self):
+        order = Order(id="O001", customer_id="C001")
+        with pytest.raises(ValueError, match="Cannot confirm an empty order"):
+            order.confirm()
+
+    def test_confirm_non_pending_order_raises_error(self):
+        order = Order(id="O001", customer_id="C001", status=OrderStatus.CONFIRMED)
+        with pytest.raises(ValueError, match="Cannot confirm an order with status"):
+            order.confirm()
+
+    def test_order_repr(self):
+        order = Order(id="O001", customer_id="C001")
+        order.items.append(make_item(quantity=1, unit_price=10.0))
+        assert repr(order) == "Order(id='O001', status=pending, total=10.00)"

@@ -116,3 +116,7 @@ class TestProductStockManagement:
         product = Product(id="P001", name="Item", price=10.0, stock=5, category="X")
         with pytest.raises(ValueError, match="Quantity must be positive"):
             product.restock(-3)
+
+    def test_product_repr(self):
+        product = Product(id="P001", name="Laptop", price=999.99, stock=10, category="Electronics")
+        assert repr(product) == "Product(id='P001', name='Laptop', price=999.99, stock=10)"

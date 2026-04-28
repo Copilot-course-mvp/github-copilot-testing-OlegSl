@@ -6,6 +6,7 @@ from src.utils.formatters import (
     format_currency,
     format_order_summary,
     format_customer_info,
+    format_item_list,
 )
 
 
@@ -109,3 +110,16 @@ class TestFormatCustomerInfo:
         info = format_customer_info(customer)
 
         assert "$1,234.56" in info
+
+    def test_format_item_list_with_items(self):
+        items = [
+            OrderItem(product_id="P001", product_name="Widget", quantity=2, unit_price=10.0),
+            OrderItem(product_id="P002", product_name="Gadget", quantity=1, unit_price=25.0),
+        ]
+        result = format_item_list(items)
+        expected = "  - Widget x2 @ $10.00 = $20.00\n  - Gadget x1 @ $25.00 = $25.00"
+        assert result == expected
+
+    def test_format_item_list_empty(self):
+        result = format_item_list([])
+        assert result == "  (no items)"

@@ -103,6 +103,10 @@ class TestStockManagement:
         assert removed is sample_product
         assert inventory.get_product("P001") is None
 
+    def test_remove_nonexistent_product_raises_key_error(self, inventory):
+        with pytest.raises(KeyError, match="Product not found"):
+            inventory.remove_product("MISSING")
+
 
 class TestInventoryListing:
     """Tests for inventory listing features."""

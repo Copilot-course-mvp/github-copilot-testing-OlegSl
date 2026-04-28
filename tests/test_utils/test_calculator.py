@@ -125,3 +125,7 @@ class TestCompoundInterest:
 
     def test_compound_interest_multiple_periods(self):
         assert calculate_compound_interest(1000.0, 10.0, 2) == pytest.approx(1210.0)
+
+    def test_calculate_compound_interest_negative_periods_raises_value_error(self):
+        with pytest.raises(ValueError, match="Periods cannot be negative"):
+            calculate_compound_interest(1000.0, 10.0, -1)

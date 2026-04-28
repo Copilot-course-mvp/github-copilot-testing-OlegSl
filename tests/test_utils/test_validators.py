@@ -93,3 +93,31 @@ class TestProductIdValidator:
 
     def test_product_id_too_long_is_invalid(self):
         assert validate_product_id("A" * 51) is False
+
+    def test_validate_coupon_code_valid(self):
+        assert validate_coupon_code("SAVE10") is True
+
+    def test_validate_coupon_code_invalid_length(self):
+        assert validate_coupon_code("ABC") is False  # too short
+        assert validate_coupon_code("ABCDEFGHIJK") is False  # too long
+
+    def test_validate_coupon_code_invalid_chars(self):
+        assert validate_coupon_code("save@10") is False  # special char
+
+    def test_validate_coupon_code_none_input(self):
+        assert validate_coupon_code(None) is False
+
+    def test_validate_customer_name_none_input(self):
+        assert validate_customer_name(None) is False
+
+    def test_validate_customer_name_valid(self):
+        assert validate_customer_name("Alice Smith") is True
+
+    def test_validate_customer_name_too_short(self):
+        assert validate_customer_name("A") is False
+
+    def test_validate_customer_name_too_long(self):
+        assert validate_customer_name("A" * 101) is False
+
+    def test_validate_customer_name_empty_after_strip(self):
+        assert validate_customer_name("   ") is False
