@@ -79,6 +79,15 @@ class TestCalculatePercentageChange:
     def test_change_from_negative_value(self):
         assert calculate_percentage_change(-50.0, 50.0) == pytest.approx(200.0)
 
+    def test_change_from_negative_to_smaller_negative(self):
+        assert calculate_percentage_change(-50.0, -25.0) == pytest.approx(50.0)
+
+    def test_change_from_positive_to_negative(self):
+        assert calculate_percentage_change(50.0, -50.0) == pytest.approx(-200.0)
+
+    def test_change_from_negative_to_zero(self):
+        assert calculate_percentage_change(-100.0, 0.0) == pytest.approx(100.0)
+
 
 class TestApplyDiscount:
     """Tests for discount application."""
