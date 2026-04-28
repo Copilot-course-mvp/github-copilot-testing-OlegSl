@@ -23,8 +23,13 @@ class TestOrderItem:
         with pytest.raises(ValueError, match="Quantity must be positive"):
             OrderItem(product_id="P1", product_name="X", quantity=0, unit_price=10.0)
 
-    # TODO: Add test for negative unit_price raising ValueError
-    # TODO: Add test for subtotal with zero unit_price
+    def test_negative_unit_price_raises_error(self):
+        with pytest.raises(ValueError, match="Unit price cannot be negative"):
+            OrderItem(product_id="P1", product_name="X", quantity=1, unit_price=-5.0)
+
+    def test_subtotal_with_zero_unit_price(self):
+        item = make_item(quantity=2, unit_price=0.0)
+        assert item.subtotal == 0.0
 
 
 class TestOrderSubtotalAndTotal:
@@ -50,8 +55,16 @@ class TestOrderSubtotalAndTotal:
         order.items.append(make_item(quantity=1, unit_price=50.0))
         assert order.total == 45.0
 
-    # TODO: Add test for total never going below zero
-    # TODO: Add test for item_count summing all quantities
+    def test_total_never_goes_below_zero(self):
+        order = Order(id="O001", customer_id="C001", discount_amount=100.0)
+        order.items.append(make_item(quantity=1, unit_price=50.0))
+        assert order.total == 0.0
+
+    def test_item_count_sums_all_quantities(self):
+        order = Order(id="O001", customer_id="C001")
+        order.items.append(make_item(quantity=2, unit_price=10.0))
+        order.items.append(make_item(quantity=3, unit_price=15.0))
+        assert order.item_count == 5
 
 
 class TestOrderStatusTransitions:
@@ -87,7 +100,37 @@ class TestOrderStatusTransitions:
         order.advance_status()
         assert order.status == OrderStatus.PROCESSING
 
-    # TODO: Add test for advance_status from PROCESSING -> SHIPPED
-    # TODO: Add test for advance_status from SHIPPED -> DELIVERED
-    # TODO: Add test for advance_status on CANCELLED raises ValueError
-    # TODO: Add test for add_item on non-PENDING order raises ValueError
+    def test_advance_status_from_processing_to_shipped(self):
+        order = Order(id="O001", customer_id="C001", status=OrderStatus.PROCESSING)
+        order.advance_status()
+        assert order.status == OrderStatus.SHIPPED
+
+    def test_advance_status_from_shipped_to_delivered(self):
+        order = Order(id="O001", customer_id="C001", status=OrderStatus.SHIPPED)
+        order.advance_status()
+        assert order.status == OrderStatus.DELIVERED
+
+    def test_advance_status_on_cancelled_raises_value_error(self):
+        order = Order(id="O001", customer_id="C001", status=OrderStatus.CANCELLED)
+        with pytest.raises(ValueError, match="Cannot advance order"):
+            order.advance_status()
+
+    def test_add_item_on_non_pending_order_raises_value_error(self):
+        order = Order(id="O001", customer_id="C001", status=OrderStatus.CONFIRMED)
+        with pytest.raises(ValueError, match="Cannot add items"):
+            order.add_item(make_item())
+
+    def test_confirm_empty_order_raises_error(self):
+        order = Order(id="O001", customer_id="C001")
+        with pytest.raises(ValueError, match="Cannot confirm an empty order"):
+            order.confirm()
+
+    def test_confirm_non_pending_order_raises_error(self):
+        order = Order(id="O001", customer_id="C001", status=OrderStatus.CONFIRMED)
+        with pytest.raises(ValueError, match="Cannot confirm an order with status"):
+            order.confirm()
+
+    def test_order_repr(self):
+        order = Order(id="O001", customer_id="C001")
+        order.items.append(make_item(quantity=1, unit_price=10.0))
+        assert repr(order) == "Order(id='O001', status=pending, total=10.00)"

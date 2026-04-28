@@ -49,7 +49,12 @@ class TestOrderCreation:
         order2 = order_service.create_order(customer)
         assert order1.id != order2.id
 
-    # TODO: Add test for create_order generates sequential IDs
+    def test_create_order_generates_sequential_ids(self, order_service, customer):
+        order1 = order_service.create_order(customer)
+        order2 = order_service.create_order(customer)
+
+        assert order1.id == "ORD-00001"
+        assert order2.id == "ORD-00002"
 
 
 class TestAddItemToOrder:
@@ -71,8 +76,18 @@ class TestAddItemToOrder:
         with pytest.raises(KeyError):
             order_service.add_item_to_order(order, "NOTEXIST", 1)
 
-    # TODO: Add test for adding out-of-stock product raises ValueError
-    # TODO: Add test for requesting more than available stock raises ValueError
+    def test_adding_out_of_stock_product_raises_value_error(self, order_service, customer, inventory):
+        inventory.add_product(Product(id="P003", name="SoldOut", price=15.0, stock=0, category="Misc"))
+        order = order_service.create_order(customer)
+
+        with pytest.raises(ValueError, match="out of stock"):
+            order_service.add_item_to_order(order, "P003", 1)
+
+    def test_requesting_more_than_available_stock_raises_value_error(self, order_service, customer):
+        order = order_service.create_order(customer)
+
+        with pytest.raises(ValueError, match="exceeds available stock"):
+            order_service.add_item_to_order(order, "P002", 6)
 
 
 class TestConfirmAndCancel:
@@ -91,5 +106,17 @@ class TestConfirmAndCancel:
         # stock should be restored to original 20
         assert inventory.get_product("P001").stock == 20
 
-    # TODO: Add test for cancelling a non-existent order raises KeyError
-    # TODO: Add test for advancing order through statuses
+    def test_cancelling_nonexistent_order_raises_key_error(self, order_service):
+        with pytest.raises(KeyError, match="Order not found"):
+            order_service.cancel_order("ORD-99999")
+
+    def test_advancing_order_through_statuses(self, order_service, customer):
+        order = order_service.create_order(customer)
+        order_service.add_item_to_order(order, "P001", 1)
+        order_service.confirm_order(order, customer)
+
+        order_service.advance_order(order.id)
+        assert order.status == OrderStatus.PROCESSING
+
+        order_service.advance_order(order.id)
+        assert order.status == OrderStatus.SHIPPED

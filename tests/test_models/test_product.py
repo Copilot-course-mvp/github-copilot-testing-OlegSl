@@ -43,9 +43,17 @@ class TestProductCreation:
         with pytest.raises(ValueError, match="Stock cannot be negative"):
             Product(id="P001", name="Item", price=10.0, stock=-1, category="General")
 
-    # TODO: Add test for empty name raising ValueError
-    # TODO: Add test for discount_percent > 100 raising ValueError
-    # TODO: Add test for discount_percent < 0 raising ValueError
+    def test_empty_name_raises_error(self):
+        with pytest.raises(ValueError, match="Product name cannot be empty"):
+            Product(id="P001", name="", price=10.0, stock=5, category="General")
+
+    def test_discount_percent_above_100_raises_error(self):
+        with pytest.raises(ValueError, match="Discount percent must be between 0 and 100"):
+            Product(id="P001", name="Item", price=10.0, stock=5, category="General", discount_percent=150.0)
+
+    def test_discount_percent_below_zero_raises_error(self):
+        with pytest.raises(ValueError, match="Discount percent must be between 0 and 100"):
+            Product(id="P001", name="Item", price=10.0, stock=5, category="General", discount_percent=-5.0)
 
 
 class TestProductProperties:
@@ -66,7 +74,9 @@ class TestProductProperties:
         product = Product(id="P001", name="Item", price=10.0, stock=3, category="X")
         assert product.is_available is True
 
-    # TODO: Add test for is_available when stock is 0 (should return False)
+    def test_is_available_when_stock_is_zero(self):
+        product = Product(id="P001", name="Item", price=10.0, stock=0, category="X")
+        assert product.is_available is False
 
 
 class TestProductStockManagement:
@@ -97,5 +107,16 @@ class TestProductStockManagement:
         product.restock(10)
         assert product.stock == 15
 
-    # TODO: Add test for restock with zero quantity raising ValueError
-    # TODO: Add test for restock with negative quantity raising ValueError
+    def test_restock_with_zero_quantity_raises_error(self):
+        product = Product(id="P001", name="Item", price=10.0, stock=5, category="X")
+        with pytest.raises(ValueError, match="Quantity must be positive"):
+            product.restock(0)
+
+    def test_restock_with_negative_quantity_raises_error(self):
+        product = Product(id="P001", name="Item", price=10.0, stock=5, category="X")
+        with pytest.raises(ValueError, match="Quantity must be positive"):
+            product.restock(-3)
+
+    def test_product_repr(self):
+        product = Product(id="P001", name="Laptop", price=999.99, stock=10, category="Electronics")
+        assert repr(product) == "Product(id='P001', name='Laptop', price=999.99, stock=10)"
